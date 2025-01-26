@@ -62,10 +62,12 @@ async function loginController(req, res) {
       });
     }
     const jwtService = new JWTService();
-    const token=jwtService.sign({id:user._id},)
+    const token = jwtService.sign({ id: user._id },process.env.JWT_SECRET);
+    console.log("Token: " + token)
     return res.status(200).json({
       success: true,
       message: "Logged in successfully",
+      token: token,
     });
   } catch (err) {
     return res.status(404).json({
