@@ -1,7 +1,22 @@
 import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import ApiResponse from "../utils/ApiResponse.js";
-async function registerController(req, res) {
+
+async function generateAccessAndRefreshToken(userId) {
+  try {
+    const user = await User.findById(userId);
+    
+    
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+   user.refreshToken=refreshToken;
+   user.save({validateBeforeSave:false});    
+    return { accessToken, refreshToken };
+  } catch (err) {
+    throw err?.message;
+  }
+}
+async function registerUser(req, res) {
   const { name, email, password } = req.body;
 
   try {
@@ -35,7 +50,7 @@ async function registerController(req, res) {
       );
   }
 }
-async function loginController(req, res) {
+async function loginUser(req, res) {
   const { email, password } = req.body;
   try {
     if (!email || !password) {
@@ -54,12 +69,21 @@ async function loginController(req, res) {
     if (!isMatch) {
       return res.status(400).json(new ApiResponse(400, "Incorrect password"));
     }
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "30s",
-    });
+    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
+      user._id
+    );
+    console.log(accessToken);
+
     return res
       .status(200)
-      .json(new ApiResponse(200, "Logged in successfully", {}, token));
+      .json(
+        new ApiResponse(
+          200,
+          "Logged in successfully",
+          {},
+          { accessToken: accessToken, refreshToken: refreshToken }
+        )
+      );
   } catch (err) {
     return res
       .status(404)
@@ -68,4 +92,4 @@ async function loginController(req, res) {
       );
   }
 }
-export { registerController, loginController };
+export { registerUser, loginUser };
