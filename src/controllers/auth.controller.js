@@ -1,22 +1,18 @@
 import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
-import { ApiResponse } from "../utils/ApiResponse.js";
+import ApiResponse from "../utils/ApiResponse.js";
 async function registerController(req, res) {
   const { name, email, password } = req.body;
 
   try {
     if (!name || !email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "Please provide required fields",
-      });
+      return res
+        .status(400)
+        .json(new ApiResponse(400, "Please provide required fields"));
     }
     const existing = await User.findOne({ email });
     if (existing) {
-      return res.status(400).json({
-        success: false,
-        message: "User already exists",
-      });
+      return res.status(400).json(new ApiResponse(400, "User already exists"));
     }
     const user = await User.create({
       name: name,
@@ -24,58 +20,52 @@ async function registerController(req, res) {
       password: password,
     });
     user.password = undefined;
-    return res.status(201).json({
-      success: true,
-      message: "User created successfully",
-      user: user,
-    });
+    return res
+      .status(201)
+      .json(new ApiResponse(201, "User created successfully", {}, user));
   } catch (err) {
-    return res.status(201).json({
-      success: false,
-      message: "Error while creating account",
-      error: err,
-    });
+    return res
+      .status(500)
+      .json(
+        new ApiResponse(
+          500,
+          "Error occured while creating account",
+          err?.message
+        )
+      );
   }
 }
 async function loginController(req, res) {
   const { email, password } = req.body;
   try {
     if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "All fields are required",
-      });
+      return res
+        .status(400)
+        .json(new ApiResponse(400, "All fields are required"));
     }
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+      return res.status(404).json(new ApiResponse(404, "User not found"));
     }
 
     const isMatch = await user.comparePassword(password);
-    
-    
+
     if (!isMatch) {
-      return res.status(400).json({
-        success: false,
-        message: "Incorrect password",
-      });
+      return res.status(400).json(new ApiResponse(400, "Incorrect password"));
     }
-    const token = jwt.sign({ id: user._id },process.env.JWT_SECRET,{
-      expiresIn:"30s"
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "30s",
     });
-    console.log(token);
-    
-    return res.status(200).json(new ApiResponse(200,token,"Logged in successfully"));
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Logged in successfully", {}, token));
   } catch (err) {
-    return res.status(404).json({
-      success: false,
-      message: "Error occured",
-      err,
-    });
+    return res
+      .status(404)
+      .json(
+        new ApiResponse(500, "Error occured while logging in", err?.message)
+      );
   }
 }
 export { registerController, loginController };
