@@ -1,5 +1,6 @@
 import User from "../models/user.model.js";
-import JWTService from "../services/jwt.service.js";
+import jwt from "jsonwebtoken";
+import { ApiResponse } from "../utils/ApiResponse.js";
 async function registerController(req, res) {
   const { name, email, password } = req.body;
 
@@ -55,20 +56,20 @@ async function loginController(req, res) {
     }
 
     const isMatch = await user.comparePassword(password);
+    
+    
     if (!isMatch) {
       return res.status(400).json({
         success: false,
         message: "Incorrect password",
       });
     }
-    const jwtService = new JWTService();
-    const token = jwtService.sign({ id: user._id },process.env.JWT_SECRET);
-    console.log("Token: " + token)
-    return res.status(200).json({
-      success: true,
-      message: "Logged in successfully",
-      token: token,
+    const token = jwt.sign({ id: user._id },process.env.JWT_SECRET,{
+      expiresIn:"30s"
     });
+    console.log(token);
+    
+    return res.status(200).json(new ApiResponse(200,token,"Logged in successfully"));
   } catch (err) {
     return res.status(404).json({
       success: false,

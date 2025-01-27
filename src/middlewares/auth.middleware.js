@@ -1,6 +1,8 @@
 import jwt from "jsonwebtoken";
-import User from "../models/user.model";
-export const verfiyJWT = async (req,_, next) => {
+import User from "../models/user.model.js";
+import { ApiError } from "../utils/ApiError.js";
+
+async function isAuthorizedUser(req, _, next)  {
   try {
     const token = req.headers.authorization.split(" ")[1];
     if (!token) {
@@ -8,10 +10,17 @@ export const verfiyJWT = async (req,_, next) => {
     }
 
     const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+    console.log(decodedToken);
+    
     if (!decodedToken) {
-      throw new ApiError(400, "Invalid token");
+      throw new ApiError(400, "Unautorized user");
     }
-    const user=await User.findOne({_id:decodedToken.id});
-    req.user=user;
-  } catch (err) {}
+    const user = await User.findById(decodedToken.id)
+    req.user = user;
+    next();
+  } catch (err) {
+   throw new ApiError(400,err);
+  }
 };
+
+export default isAuthorizedUser;
