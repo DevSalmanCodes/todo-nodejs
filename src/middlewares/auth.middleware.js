@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
+import ApiResponse from "../utils/ApiResponse.js";
 
 async function isAuthorizedUser(req, res, next) {
   try {
@@ -22,7 +23,7 @@ async function isAuthorizedUser(req, res, next) {
     if (err.name === "TokenExpiredError") {
       return res.status(401).json(new ApiResponse(401, "Token expired"));
     } else if (err.name === "JsonWebTokenError") {
-      return res.status(401).json(ApiResponse(401, "Invalid token"));
+      return res.status(401).json(new ApiResponse(401, "Invalid token"));
     } else {
       return res
         .status(500)

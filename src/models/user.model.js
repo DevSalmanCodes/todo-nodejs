@@ -17,6 +17,10 @@ const userSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
+  refreshToken: {
+    type: String,
+    default: null,
+  },
 });
 
 userSchema.pre("save", async function (next) {
@@ -43,17 +47,17 @@ userSchema.methods.comparePassword = async function (plainPassword) {
   const isMatch = await bcrypt.compare(plainPassword, this.password);
   return isMatch;
 };
-userSchema.methods.generateAccessToken=async function (userId){
-  return jwt.sign(userId,process.env.JWT_SECRET,{
-    expiresIn:process.env.ACCESS_TOKEN_EXPIRY=function (userId){
-      return jwt.sign(userId,process.env.JWT_SECRET,{
-        expiresIn:process.env.REFRESH_TOKEN_EXPIRY,
-      })
-    }
+userSchema.methods.generateAccessToken = function () {
+  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
+    expiresIn:"1H",
   });
-
-}
-userSchema.methods.generatedRefres
+};
+userSchema.methods.generateRefreshToken = function () {
+  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
+    expiresIn:"1d",
+  });
+};
+userSchema.methods.generatedRefres;
 const User = mongoose.model("User", userSchema);
 
 export default User;
