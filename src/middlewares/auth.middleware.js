@@ -5,6 +5,7 @@ import ApiError from "../utils/ApiError.js";
 async function isAuthorizedUser(req, res, next) {
   try {
     const token = req.headers.authorization?.split(" ")[1];
+
     if (!token) {
       return res.status(401).json(new ApiError(401, "Unauthorized user"));
     }
@@ -21,13 +22,13 @@ async function isAuthorizedUser(req, res, next) {
     next();
   } catch (err) {
     if (err.name === "TokenExpiredError") {
-      return res.status(401).json(new ApiError(401,"Token expired" ));
+      return res.status(401).json(new ApiError(401, "Token expired"));
     } else if (err.name === "JsonWebTokenError") {
       return res.status(401).json(new ApiError(401, "Invalid token"));
     } else {
       return res
         .status(500)
-        .json(new ApiError(500,err?.message || "Internal server error"));
+        .json(new ApiError(500, err?.message || "Internal server error"));
     }
   }
 }

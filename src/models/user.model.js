@@ -49,7 +49,7 @@ userSchema.methods.comparePassword = async function (plainPassword) {
 };
 userSchema.methods.generateAccessToken = function () {
   return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
-    expiresIn:"1H",
+    expiresIn:"30s",
   });
 };
 userSchema.methods.generateRefreshToken = function () {

@@ -14,7 +14,7 @@ async function generateAccessAndRefreshToken(userId) {
     throw err;
   }
 }
-async function registerController(req, res) {
+async function registerUser(req, res) {
   const { name, email, password } = req.body;
 
   try {
@@ -35,29 +35,25 @@ async function registerController(req, res) {
     user.password = undefined;
     return res
       .status(201)
-      .json(new ApiResponse(201, "Account created successfully",user));
+      .json(new ApiResponse(201, "Account created successfully", user));
   } catch (err) {
     return res
       .status(500)
       .json(
         new ApiError(
           500,
-          err?.message ||
-          "Error occured while creating account",
-          
+          err?.message || "Error occured while creating account"
         )
       );
   }
 }
 
 // send
-async function loginController(req, res) {
+async function loginUser(req, res) {
   const { email, password } = req.body;
   try {
     if (!email || !password) {
-      return res
-        .status(400)
-        .json(new ApiError(400, "All fields are required"));
+      return res.status(400).json(new ApiError(400, "All fields are required"));
     }
     const user = await User.findOne({ email });
 
@@ -74,16 +70,14 @@ async function loginController(req, res) {
       user._id
     );
     user.refreshToken = undefined;
-    return res
-      .status(200)
-      .json(
-        new ApiResponse(
-          200,
-          "Logged in successfully",
-      
-          { accessToken: accessToken, refreshToken: refreshToken }
-        )
-      );
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        "Logged in successfully",
+
+        { accessToken: accessToken, refreshToken: refreshToken }
+      )
+    );
   } catch (err) {
     return res
       .status(404)
@@ -92,4 +86,4 @@ async function loginController(req, res) {
       );
   }
 }
-export { registerController, loginController };
+export { registerUser, loginUser };

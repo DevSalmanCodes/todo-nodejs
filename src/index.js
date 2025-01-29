@@ -13,9 +13,6 @@ connectDb(process.env.MONGO_DB_URI).then((_) => {
   app.listen(PORT, () => {
     console.log(`✅ Server listening on port: ${PORT}`);
   });
-
   app.use("/api/v1/auth", authRouter);
-  app.use(isAuthorizedUser);
-
   app.use("/api/v1/user", userRouter);
 });
