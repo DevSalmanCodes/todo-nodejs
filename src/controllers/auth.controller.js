@@ -1,6 +1,7 @@
 import User from "../models/user.model.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
+import validateUser from "../validations/userValidation.js";
 
 async function generateAccessAndRefreshToken(userId) {
   try {
@@ -16,7 +17,10 @@ async function generateAccessAndRefreshToken(userId) {
 }
 async function registerUser(req, res) {
   const { name, email, password } = req.body;
-
+  const { error } = validateUser(req.body);
+  if (error) {
+    return res.status(400).json(new ApiError(400, error.details[0].message));
+  }
   try {
     if (!name || !email || !password) {
       return res
@@ -32,6 +36,7 @@ async function registerUser(req, res) {
       email: email,
       password: password,
     });
+    user.refreshToken = undefined;
     user.password = undefined;
     return res
       .status(201)
