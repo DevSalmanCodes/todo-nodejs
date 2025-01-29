@@ -1,12 +1,13 @@
 import jwt from "jsonwebtoken";
 import ApiResponse from "../utils/ApiResponse.js";
 import User from "../models/user.model.js";
+import ApiError from "../utils/ApiError.js";
 
 async function refreshAccessToken(req, res) {
   const incomingRefreshToken = req.body.refreshToken;
 
   if (!incomingRefreshToken) {
-    return res.status(401).json(new ApiResponse(401, "Unauthorized request"));
+    return res.status(401).json(new ApiError(401, "Unauthorized request"));
   }
   try {
     const decodedToken = jwt.verify(
@@ -15,15 +16,15 @@ async function refreshAccessToken(req, res) {
     );
 
     if (!decodedToken || !decodedToken.id) {
-      return res.status(401).json(new ApiResponse(401, "Unauthorized request"));
+      return res.status(401).json(new ApiError(401, "Unauthorized request"));
     }
     const user = await User.findById(decodedToken.id).select("-password");
 
     if (!user) {
-      return res.status(404).json(new ApiResponse(404, "User not found"));
+      return res.status(404).json(new ApiError(404, "User not found"));
     }
     if (user.refreshToken !== incomingRefreshToken) {
-      return res.status(401).json(new ApiResponse(401, "Unauthorized request"));
+      return res.status(401).json(new ApiError(401, "Unauthorized request"));
     }
 
     const newAccessToken = user.generateAccessToken();
@@ -33,7 +34,6 @@ async function refreshAccessToken(req, res) {
       new ApiResponse(
         200,
         "Access token refreshed successfully",
-        {},
         {
           accessToken: newAccessToken,
           refreshToken: newRefreshToken,
@@ -42,13 +42,13 @@ async function refreshAccessToken(req, res) {
     );
   } catch (err) {
     if (err.name === "TokenExpiredError") {
-      return res.status(401).json(new ApiResponse(401, "Token expired"));
+      return res.status(401).json(new ApiError(401, "Token expired"));
     } else if (err.name === "JsonWebTokenError") {
-      return res.status(401).json(new ApiResponse(401, "Invalid token"));
+      return res.status(401).json(new ApiError(401, "Invalid token"));
     } else {
       return res
         .status(500)
-        .json(new ApiResponse(500, "Internal server error"));
+        .json(new ApiError(500,err?.message || "Internal server error"));
     }
   }
 }
@@ -60,19 +60,19 @@ async function changePassword(req, res) {
   if (!oldPassword || !newPassword) {
     return res
       .status(400)
-      .json(new ApiResponse(400, "Old and new password is required"));
+      .json(new ApiError(400, "Old and new password is required"));
   }
   try {
     const user = await User.findById(req.user._id);
 
     if (!user) {
-      return res.status(404).json(new ApiResponse(404, "User not found"));
+      return res.status(404).json(new ApiError(404, "User not found"));
     }
     const isMatch = await user.comparePassword(oldPassword);
     if (!isMatch) {
       return res
         .status(401)
-        .json(new ApiResponse(401, "Incorrect old password"));
+        .json(new ApiError(401, "Incorrect old password"));
     }
     user.password = newPassword;
     await user.save();
@@ -80,9 +80,9 @@ async function changePassword(req, res) {
     user.refreshToken = undefined;
     return res
       .status(200)
-      .json(new ApiResponse(200, "Paassword changed successfully", {}, user));
+      .json(new ApiResponse(200, "Paassword changed successfully", user));
   } catch (err) {
-    return res.status(500).json(new ApiResponse(500, "Internal server error"));
+    return res.status(500).json(new ApiError(500,err?.message || "Internal server error"));
   }
 }
 

@@ -7,7 +7,7 @@ import authRouter from "./routes/auth.route.js";
 import userRouter from "./routes/user.route.js";
 import isAuthorizedUser from "./middlewares/auth.middleware.js";
 
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 3000;
 app.use(express.json());
 connectDb(process.env.MONGO_DB_URI).then((_) => {
   app.listen(PORT, () => {
@@ -15,8 +15,7 @@ connectDb(process.env.MONGO_DB_URI).then((_) => {
   });
 
   app.use("/api/v1/auth", authRouter);
-  app.use(isAuthorizedUser)
+  app.use(isAuthorizedUser);
 
-  app.use("/api/v1/user",userRouter)
-
+  app.use("/api/v1/user", userRouter);
 });

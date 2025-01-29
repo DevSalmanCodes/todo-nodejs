@@ -1,12 +1,12 @@
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
-import ApiResponse from "../utils/ApiResponse.js";
+import ApiError from "../utils/ApiError.js";
 
 async function isAuthorizedUser(req, res, next) {
   try {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
-      return res.status(401).json(new ApiResponse(401, "Unauthorized user"));
+      return res.status(401).json(new ApiError(401, "Unauthorized user"));
     }
 
     const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
@@ -15,19 +15,19 @@ async function isAuthorizedUser(req, res, next) {
       "-password -refreshToken"
     );
     if (!user) {
-      return res.status(401).json(new ApiResponse(401, "Unauthorized user"));
+      return res.status(401).json(new ApiError(401, "Unauthorized user"));
     }
     req.user = user;
     next();
   } catch (err) {
     if (err.name === "TokenExpiredError") {
-      return res.status(401).json(new ApiResponse(401, "Token expired"));
+      return res.status(401).json(new ApiError(401,"Token expired" ));
     } else if (err.name === "JsonWebTokenError") {
-      return res.status(401).json(new ApiResponse(401, "Invalid token"));
+      return res.status(401).json(new ApiError(401, "Invalid token"));
     } else {
       return res
         .status(500)
-        .json(new ApiResponse(500, "Internal server error", err?.message));
+        .json(new ApiError(500,err?.message || "Internal server error"));
     }
   }
 }

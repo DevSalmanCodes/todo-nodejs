@@ -1,6 +1,6 @@
 import User from "../models/user.model.js";
-import jwt from "jsonwebtoken";
 import ApiResponse from "../utils/ApiResponse.js";
+import ApiError from "../utils/ApiError.js";
 
 async function generateAccessAndRefreshToken(userId) {
   try {
@@ -21,11 +21,11 @@ async function registerController(req, res) {
     if (!name || !email || !password) {
       return res
         .status(400)
-        .json(new ApiResponse(400, "Please provide required fields"));
+        .json(new ApiError(400, "Please provide required fields"));
     }
     const existing = await User.findOne({ email });
     if (existing) {
-      return res.status(400).json(new ApiResponse(400, "User already exists"));
+      return res.status(400).json(new ApiError(400, "User already exists"));
     }
     const user = await User.create({
       name: name,
@@ -35,15 +35,16 @@ async function registerController(req, res) {
     user.password = undefined;
     return res
       .status(201)
-      .json(new ApiResponse(201, "User created successfully", {}, user));
+      .json(new ApiResponse(201, "Account created successfully",user));
   } catch (err) {
     return res
       .status(500)
       .json(
-        new ApiResponse(
+        new ApiError(
           500,
+          err?.message ||
           "Error occured while creating account",
-          err?.message
+          
         )
       );
   }
@@ -56,18 +57,18 @@ async function loginController(req, res) {
     if (!email || !password) {
       return res
         .status(400)
-        .json(new ApiResponse(400, "All fields are required"));
+        .json(new ApiError(400, "All fields are required"));
     }
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(404).json(new ApiResponse(404, "User not found"));
+      return res.status(404).json(new ApiError(404, "User not found"));
     }
 
     const isMatch = await user.comparePassword(password);
 
     if (!isMatch) {
-      return res.status(400).json(new ApiResponse(400, "Incorrect password"));
+      return res.status(400).json(new ApiError(400, "Incorrect password"));
     }
     const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
       user._id
@@ -79,7 +80,7 @@ async function loginController(req, res) {
         new ApiResponse(
           200,
           "Logged in successfully",
-          {},
+      
           { accessToken: accessToken, refreshToken: refreshToken }
         )
       );
@@ -87,7 +88,7 @@ async function loginController(req, res) {
     return res
       .status(404)
       .json(
-        new ApiResponse(500, "Error occured while logging in", err?.message)
+        new ApiError(500, err?.message || "Error occured while logging in")
       );
   }
 }
