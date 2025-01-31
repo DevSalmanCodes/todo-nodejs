@@ -1,8 +1,10 @@
 import express from "express";
-import { changePassword, refreshAccessToken } from "../controllers/user.controller.js";
+import {
+  changePassword,
+  refreshAccessToken,
+} from "../controllers/user.controller.js";
 const router = express.Router();
-
-router.post("/refresh-token", refreshAccessToken);
-router.patch("/change-password",changePassword)
+router.route("/refresh-token").post(refreshAccessToken);
+router.route("/change-password").patch(changePassword);
 
 export default router;
