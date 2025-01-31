@@ -68,6 +68,32 @@ async function updateTodo(req, res) {
   }
 }
 
-async function deleteTodo(req, res) {}
+async function deleteTodo(req, res) {
+  const { id } = req.params;
+  if (!id) {
+    return res.status(400).json(new ApiError(400, "Please provide id"));
+  }
+  try {
+    const todo = await Todo.findById(id);
+    if (!todo) {
+      return res.status(404).json(new ApiError(404, "Todo not found"));
+    }
 
-export { addTodo, getTodos, updateTodo };
+    if (req.user._id.toString() !== todo.userId.toString()) {
+      return res
+        .status(401)
+        .json(new ApiError(401, "You are not authorized to update this todo"));
+    }
+
+    await todo.deleteOne();
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Todo deleted successfully", todo));
+  } catch (err) {
+    return res
+      .status(500)
+      .json(new ApiError(500), err?.message || "Internal server error");
+  }
+}
+
+export { addTodo, getTodos, updateTodo, deleteTodo };
