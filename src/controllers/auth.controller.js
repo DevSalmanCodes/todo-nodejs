@@ -17,16 +17,11 @@ async function generateAccessAndRefreshToken(userId) {
 }
 async function registerUser(req, res) {
   const { name, email, password } = req.body;
-  const { error } = validateUser(req.body);
+  const { error } = validateUser(req.body,"register");
   if (error) {
     return res.status(400).json(new ApiError(400, error.details[0].message));
   }
   try {
-    if (!name || !email || !password) {
-      return res
-        .status(400)
-        .json(new ApiError(400, "Please provide required fields"));
-    }
     const existing = await User.findOne({ email });
     if (existing) {
       return res.status(400).json(new ApiError(400, "User already exists"));
@@ -56,10 +51,11 @@ async function registerUser(req, res) {
 // send
 async function loginUser(req, res) {
   const { email, password } = req.body;
+  const {error} = validateUser(req.body,"login");
+  if (error) {
+    return res.status(400).json(new ApiError(400, error.details[0].message));
+  }
   try {
-    if (!email || !password) {
-      return res.status(400).json(new ApiError(400, "All fields are required"));
-    }
     const user = await User.findOne({ email });
 
     if (!user) {
