@@ -17,6 +17,8 @@
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.5",
+    "nodemailer": "^6.10.0",
+    "otp-generator": "^4.0.1",
     "prettier": "^3.4.2"
   },
   "devDependencies": {

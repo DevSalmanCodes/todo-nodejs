@@ -17,9 +17,17 @@ const userSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
-  refreshToken:{
-    type:String,
-    default:null,
+  refreshToken: {
+    type: String,
+    default: null,
+  },
+  emailOtp: {
+    type: String,
+    default: null,
+  },
+  isEmailVerified:{
+    type: Boolean,
+    default: false,
   }
 });
 
@@ -49,12 +57,12 @@ userSchema.methods.comparePassword = async function (plainPassword) {
 };
 userSchema.methods.generateAccessToken = function () {
   return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
-    expiresIn:"1h",
+    expiresIn: "1h",
   });
 };
 userSchema.methods.generateRefreshToken = function () {
   return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
-    expiresIn:"1d",
+    expiresIn: "1d",
   });
 };
 userSchema.methods.generatedRefres;

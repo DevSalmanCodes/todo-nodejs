@@ -31,14 +31,10 @@ async function refreshAccessToken(req, res) {
     const newRefreshToken = user.generateRefreshToken();
 
     res.json(
-      new ApiResponse(
-        200,
-        "Access token refreshed successfully",
-        {
-          accessToken: newAccessToken,
-          refreshToken: newRefreshToken,
-        }
-      )
+      new ApiResponse(200, "Access token refreshed successfully", {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+      })
     );
   } catch (err) {
     if (err.name === "TokenExpiredError") {
@@ -48,7 +44,7 @@ async function refreshAccessToken(req, res) {
     } else {
       return res
         .status(500)
-        .json(new ApiError(500,err?.message || "Internal server error"));
+        .json(new ApiError(500, err?.message || "Error while refreshing access token"));
     }
   }
 }
@@ -70,9 +66,7 @@ async function changePassword(req, res) {
     }
     const isMatch = await user.comparePassword(oldPassword);
     if (!isMatch) {
-      return res
-        .status(401)
-        .json(new ApiError(401, "Incorrect old password"));
+      return res.status(401).json(new ApiError(401, "Incorrect old password"));
     }
     user.password = newPassword;
     await user.save();
@@ -82,8 +76,30 @@ async function changePassword(req, res) {
       .status(200)
       .json(new ApiResponse(200, "Paassword changed successfully", user));
   } catch (err) {
-    return res.status(500).json(new ApiError(500,err?.message || "Internal server error"));
+    return res
+      .status(500)
+      .json(new ApiError(500, err?.message || "Error occurred while changing password"));
   }
 }
 
-export { refreshAccessToken, changePassword };
+async function updateUserProfile(req, res) {
+  const { name, email } = req.body;
+  if (!name && !email) {
+    return res.status(400).json(new ApiError(400, "Name or email is required"));
+  }
+  try {
+    const user = await User.findByIdAndUpdate(req.user._id,{
+      name:name,
+      email:email,
+    },{
+      new:true,
+      
+    }).select("-password -refreshToken");
+
+    return res.status(200).json(new ApiResponse(200, "Profile updated successfully", user));
+  } catch (err) {
+    return res.status(500).json(new ApiError(500, err?.message || "Error while updating profile"));
+  }
+}
+
+export { refreshAccessToken, changePassword,updateUserProfile };
