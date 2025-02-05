@@ -35,13 +35,15 @@ async function registerUser(req, res) {
 
     const otp = await sendEmail(email);
     user.emailOtp = otp;
-    console.log(otp)
+    console.log(otp);
     await user.save();
     user.refreshToken = undefined;
     user.password = undefined;
     return res
       .status(201)
-      .json(new ApiResponse(201, "OTP sent!, please verify before login", user));
+      .json(
+        new ApiResponse(201, "OTP sent!, please verify before login", user)
+      );
   } catch (err) {
     return res
       .status(500)
@@ -113,6 +115,7 @@ async function verifyOtp(req, res) {
     user.emailOtp = null;
     user.isEmailVerified = true;
     await user.save({ validateBeforeSave: false });
+    return res.status(200).json(new ApiResponse(200, "Email verified!"));
   } catch (err) {
     return res
       .status(500)
@@ -121,4 +124,26 @@ async function verifyOtp(req, res) {
       );
   }
 }
-export { registerUser, loginUser, verifyOtp };
+
+async function sendOtp(req, res) {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json(new ApiError(400, "Please provide email"));
+  }
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json(new ApiError(404, "User not found"));
+    }
+    const otp = await sendEmail(email);
+    user.emailOtp = otp;
+    user.save({ validateBeforeSave: false });
+    return res.status(200).json(new ApiResponse(200,"Otp sent!"))
+  } catch (err) {
+    return res
+      .status(500)
+      .json(new ApiError(500, "Error occured while sending otp"));
+  }
+}
+export { registerUser, loginUser, verifyOtp,sendOtp };
