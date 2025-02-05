@@ -44,7 +44,7 @@ async function refreshAccessToken(req, res) {
     } else {
       return res
         .status(500)
-        .json(new ApiError(500, err?.message || "Internal server error"));
+        .json(new ApiError(500, err?.message || "Error while refreshing access token"));
     }
   }
 }
@@ -78,7 +78,7 @@ async function changePassword(req, res) {
   } catch (err) {
     return res
       .status(500)
-      .json(new ApiError(500, err?.message || "Internal server error"));
+      .json(new ApiError(500, err?.message || "Error occurred while changing password"));
   }
 }
 
@@ -98,7 +98,7 @@ async function updateUserProfile(req, res) {
 
     return res.status(200).json(new ApiResponse(200, "Profile updated successfully", user));
   } catch (err) {
-    return res.status(500).json(new ApiError(500, err?.message || "Internal server error"));
+    return res.status(500).json(new ApiError(500, err?.message || "Error while updating profile"));
   }
 }
 

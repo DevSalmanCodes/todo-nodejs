@@ -11,7 +11,9 @@ const validateUser = (data, type) => {
       "string.empty": "Password is required.",
       "any.required": "Password is required.",
     }),
+ 
   });
+
 
   if (type === "register") {
     schema = schema.keys({

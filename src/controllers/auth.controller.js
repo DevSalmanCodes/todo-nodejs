@@ -2,6 +2,7 @@ import User from "../models/user.model.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
 import validateUser from "../validations/userValidation.js";
+import sendEmail from "../utils/email.js";
 
 async function generateAccessAndRefreshToken(userId) {
   try {
@@ -17,7 +18,7 @@ async function generateAccessAndRefreshToken(userId) {
 }
 async function registerUser(req, res) {
   const { name, email, password } = req.body;
-  const { error } = validateUser(req.body,"register");
+  const { error } = validateUser(req.body, "register");
   if (error) {
     return res.status(400).json(new ApiError(400, error.details[0].message));
   }
@@ -31,18 +32,23 @@ async function registerUser(req, res) {
       email: email,
       password: password,
     });
+
+    const otp = await sendEmail(email);
+    user.emailOtp = otp;
+    console.log(otp)
+    await user.save();
     user.refreshToken = undefined;
     user.password = undefined;
     return res
       .status(201)
-      .json(new ApiResponse(201, "Account created successfully", user));
+      .json(new ApiResponse(201, "OTP sent!, please verify before login", user));
   } catch (err) {
     return res
       .status(500)
       .json(
         new ApiError(
           500,
-          err?.message || "Error occured while creating account"
+          err?.message || "Error occured while creating an account"
         )
       );
   }
@@ -51,7 +57,7 @@ async function registerUser(req, res) {
 // send
 async function loginUser(req, res) {
   const { email, password } = req.body;
-  const {error} = validateUser(req.body,"login");
+  const { error } = validateUser(req.body, "login");
   if (error) {
     return res.status(400).json(new ApiError(400, error.details[0].message));
   }
@@ -66,6 +72,9 @@ async function loginUser(req, res) {
 
     if (!isMatch) {
       return res.status(400).json(new ApiError(400, "Incorrect password"));
+    }
+    if (!user.isEmailVerified) {
+      return res.status(401).json(new ApiError(401, "Email not verified"));
     }
     const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
       user._id
@@ -87,4 +96,29 @@ async function loginUser(req, res) {
       );
   }
 }
-export { registerUser, loginUser };
+
+async function verifyOtp(req, res) {
+  const { email, otp } = req.body;
+  if (!email || !otp) {
+    return res.status(400).json(new ApiError(400, "Email and otp is required"));
+  }
+  try {
+    const user = await User.findOne({ email: email });
+    if (!user) {
+      return res.status(404).json(new ApiError(404, "User not found"));
+    }
+    if (user.emailOtp !== otp) {
+      return res.status(400).json(new ApiError(400, "Invalid otp"));
+    }
+    user.emailOtp = null;
+    user.isEmailVerified = true;
+    await user.save({ validateBeforeSave: false });
+  } catch (err) {
+    return res
+      .status(500)
+      .json(
+        new ApiError(500, err?.message || "Error occured while verifying otp")
+      );
+  }
+}
+export { registerUser, loginUser, verifyOtp };
