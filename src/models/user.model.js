@@ -47,7 +47,6 @@ userSchema.pre("save", async function (next) {
 
     next();
   } catch (err) {
-    console.log(err);
     next(err);
   }
 });
@@ -65,7 +64,7 @@ userSchema.methods.generateRefreshToken = function () {
     expiresIn: "1d",
   });
 };
-userSchema.methods.generatedRefres;
+
 const User = mongoose.model("User", userSchema);
 
 export default User;
