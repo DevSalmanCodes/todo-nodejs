@@ -44,7 +44,12 @@ async function refreshAccessToken(req, res) {
     } else {
       return res
         .status(500)
-        .json(new ApiError(500, err?.message || "Error while refreshing access token"));
+        .json(
+          new ApiError(
+            500,
+            err?.message || "Error while refreshing access token"
+          )
+        );
     }
   }
 }
@@ -78,7 +83,12 @@ async function changePassword(req, res) {
   } catch (err) {
     return res
       .status(500)
-      .json(new ApiError(500, err?.message || "Error occurred while changing password"));
+      .json(
+        new ApiError(
+          500,
+          err?.message || "Error occurred while changing password"
+        )
+      );
   }
 }
 
@@ -88,18 +98,37 @@ async function updateUserProfile(req, res) {
     return res.status(400).json(new ApiError(400, "Name or email is required"));
   }
   try {
-    const user = await User.findByIdAndUpdate(req.user._id,{
-      name:name,
-      email:email,
-    },{
-      new:true,
-      
-    }).select("-password -refreshToken");
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        name: name,
+        email: email,
+      },
+      {
+        new: true,
+      }
+    ).select("-password -refreshToken");
 
-    return res.status(200).json(new ApiResponse(200, "Profile updated successfully", user));
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Profile updated successfully", user));
   } catch (err) {
-    return res.status(500).json(new ApiError(500, err?.message || "Error while updating profile"));
+    return res
+      .status(500)
+      .json(new ApiError(500, err?.message || "Error while updating profile"));
   }
 }
 
-export { refreshAccessToken, changePassword,updateUserProfile };
+async function getCurrentUser(req, res) {
+  try {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "User found successfully", req.user));
+  } catch (err) {
+    return res
+      .status(500)
+      .json(new ApiError(500, err?.message || "Error while getting user"));
+  }
+}
+
+export { refreshAccessToken, changePassword, updateUserProfile,getCurrentUser };
