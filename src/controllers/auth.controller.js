@@ -30,13 +30,7 @@ async function registerUser(req, res) {
       return res.status(400).json(new ApiError(400, "User already exists"));
     }
     const avatarLocalPath = req.file?.path;
-    console.log(avatarLocalPath);
-    if (!avatarLocalPath) {
-      return res.status(400).json(new ApiError(400, "Please provide avatar"));
-    }
     const avatarUrl = await uploadOnCloudinary(avatarLocalPath);
-    console.log(avatarUrl);
-
     const user = await User.create({
       name: name,
       email: email,
