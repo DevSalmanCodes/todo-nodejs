@@ -25,6 +25,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  otpExpiry: {
+    type: Date,
+    default: () => Date.now() + 3 * 60 * 1000, 
+  },
   isEmailVerified:{
     type: Boolean,
     default: false,
@@ -47,7 +51,6 @@ userSchema.pre("save", async function (next) {
 
     next();
   } catch (err) {
-    console.log(err);
     next(err);
   }
 });
@@ -65,7 +68,7 @@ userSchema.methods.generateRefreshToken = function () {
     expiresIn: "1d",
   });
 };
-userSchema.methods.generatedRefres;
+
 const User = mongoose.model("User", userSchema);
 
 export default User;
