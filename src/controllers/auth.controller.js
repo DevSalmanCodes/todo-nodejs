@@ -111,7 +111,7 @@ async function verifyOtp(req, res) {
       return res.status(400).json(new ApiError(400, "Invalid otp"));
     }
     
-    if(Date.now() > user.expiresIn){
+    if(Date.now() > user.otpExpiry){
       return res.status(400).json(new ApiError(400, "Otp expired"));
     }
     user.emailOtp = null;
