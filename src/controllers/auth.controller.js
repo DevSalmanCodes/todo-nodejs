@@ -3,6 +3,7 @@ import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
 import validateUser from "../validations/userValidation.js";
 import sendEmail from "../utils/email.js";
+import uploadOnCloudinary from "../utils/cloudinary.js";
 
 async function generateAccessAndRefreshToken(userId) {
   try {
@@ -18,6 +19,7 @@ async function generateAccessAndRefreshToken(userId) {
 }
 async function registerUser(req, res) {
   const { name, email, password } = req.body;
+
   const { error } = validateUser(req.body, "register");
   if (error) {
     return res.status(400).json(new ApiError(400, error.details[0].message));
@@ -27,10 +29,19 @@ async function registerUser(req, res) {
     if (existing) {
       return res.status(400).json(new ApiError(400, "User already exists"));
     }
+    const avatarLocalPath = req.file?.path;
+    console.log(avatarLocalPath);
+    if (!avatarLocalPath) {
+      return res.status(400).json(new ApiError(400, "Please provide avatar"));
+    }
+    const avatarUrl = await uploadOnCloudinary(avatarLocalPath);
+    console.log(avatarUrl);
+
     const user = await User.create({
       name: name,
       email: email,
       password: password,
+      avatar: avatarUrl,
     });
 
     const otp = await sendEmail(email);
@@ -108,11 +119,11 @@ async function verifyOtp(req, res) {
     if (!user) {
       return res.status(404).json(new ApiError(404, "User not found"));
     }
-    if (user.emailOtp !== otp ) {
+    if (user.emailOtp !== otp) {
       return res.status(400).json(new ApiError(400, "Invalid otp"));
     }
-    
-    if(Date.now() > user.otpExpiry){
+
+    if (Date.now() > user.otpExpiry) {
       return res.status(400).json(new ApiError(400, "Otp expired"));
     }
     user.emailOtp = null;
