@@ -54,7 +54,7 @@ async function registerUser(req, res) {
   }
 }
 
-// send
+
 async function loginUser(req, res) {
   const { email, password } = req.body;
   const { error } = validateUser(req.body, "login");
@@ -113,6 +113,7 @@ async function verifyOtp(req, res) {
     user.emailOtp = null;
     user.isEmailVerified = true;
     await user.save({ validateBeforeSave: false });
+    return res.status(200).json(new ApiResponse(200,""))
   } catch (err) {
     return res
       .status(500)
