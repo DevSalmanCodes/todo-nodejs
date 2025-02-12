@@ -27,7 +27,7 @@ const userSchema = new mongoose.Schema({
   },
   otpExpiry: {
     type: Date,
-    default: () => Date.now() + 0.2 * 60 * 1000, 
+    default: () => Date.now() + 3 * 60 * 1000, 
   },
   isEmailVerified:{
     type: Boolean,
