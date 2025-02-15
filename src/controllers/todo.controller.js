@@ -22,7 +22,9 @@ async function addTodo(req, res) {
   } catch (err) {
     return res
       .status(500)
-      .json(new ApiError(500, err?.message ||  "Error while creating a new todo"));
+      .json(
+        new ApiError(500, err?.message || "Error while creating a new todo")
+      );
   }
 }
 
@@ -33,7 +35,7 @@ async function getTodos(req, res) {
   } catch (err) {
     return res
       .status(500)
-      .json(new ApiError(500), err?.message || "Error while fetching todos");
+      .json(new ApiError(500, err?.message || "Error while fetching todos"));
   }
 }
 
@@ -64,14 +66,14 @@ async function updateTodo(req, res) {
   } catch (err) {
     return res
       .status(500)
-      .json(new ApiError(500), err?.message || "Error while updating todo");
+      .json(new ApiError(500, err?.message || "Error while updating todo"));
   }
 }
 
 async function deleteTodo(req, res) {
   const { id } = req.params;
   if (!id) {
-    return res.status(400).json(new ApiError(400, "Please provide id"));
+    return res.status(400).json(new ApiError(400, "Please provide todo id"));
   }
   try {
     const todo = await Todo.findById(id);
@@ -92,7 +94,7 @@ async function deleteTodo(req, res) {
   } catch (err) {
     return res
       .status(500)
-      .json(new ApiError(500), err?.message || "Error while deleting the todo");
+      .json(new ApiError(500, err?.message || "Error while deleting the todo"));
   }
 }
 
