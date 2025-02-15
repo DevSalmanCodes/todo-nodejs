@@ -5,7 +5,6 @@ import validateUser from "../validations/userValidation.js";
 import sendEmail from "../utils/email.js";
 import {
   uploadOnCloudinary,
-  deleteCloudinaryFile,
 } from "../utils/cloudinary.js";
 
 async function generateAccessAndRefreshToken(userId) {
@@ -166,7 +165,7 @@ async function sendOtp(req, res) {
   } catch (err) {
     return res
       .status(500)
-      .json(new ApiError(500, "Error occured while sending otp"));
+      .json(new ApiError(500,err?.message ||  "Error occured while sending otp"));
   }
 }
 
@@ -187,7 +186,7 @@ async function logoutUser(req, res) {
   } catch (err) {
     return res
       .status(500)
-      .json(new ApiError(500, "Error occured while logging out"));
+      .json(new ApiError(500,err?.message ||  "Error occured while logging out"));
   }
 }
 
