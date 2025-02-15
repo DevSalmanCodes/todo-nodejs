@@ -95,7 +95,7 @@ async function changePassword(req, res) {
   }
 }
 
-async function updateUserProfile(req, res) {
+async function updateUserProfileDetails(req, res) {
   const { name, email } = req.body;
   if (!name && !email) {
     return res.status(400).json(new ApiError(400, "Name or email is required"));
@@ -170,7 +170,7 @@ async function updateUserAvatar(req, res) {
 export {
   refreshAccessToken,
   changePassword,
-  updateUserProfile,
+  updateUserProfileDetails,
   getCurrentUser,
   updateUserAvatar,
 };
