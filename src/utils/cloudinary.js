@@ -7,16 +7,27 @@ async function uploadOnCloudinary(localFilePath) {
       api_key: process.env.CLOUDINARY_API_KEY,
       api_secret: process.env.CLOUDINARY_SECRET,
     });
-  if(!localFilePath){
-    return null;
-  }
-    const uploadResult = await cloudinary.uploader.upload(localFilePath,{resource_type:"auto"});
+    if (!localFilePath) {
+      return null;
+    }
+    const uploadResult = await cloudinary.uploader.upload(localFilePath, {
+      resource_type: "auto",
+    });
     fs.unlinkSync(localFilePath);
-    return uploadResult.url;
+    return uploadResult;
   } catch (err) {
     fs.unlinkSync(localFilePath);
-   return null;
+    return null;
   }
 }
 
-export default uploadOnCloudinary;
+async function deleteCloudinaryFile(publicId) {
+  try {
+    await cloudinary.uploader.destroy(publicId);
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+export  {uploadOnCloudinary, deleteCloudinaryFile};

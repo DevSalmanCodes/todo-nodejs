@@ -2,7 +2,10 @@ import jwt from "jsonwebtoken";
 import ApiResponse from "../utils/ApiResponse.js";
 import User from "../models/user.model.js";
 import ApiError from "../utils/ApiError.js";
-
+import {
+  uploadOnCloudinary,
+  deleteCloudinaryFile,
+} from "../utils/cloudinary.js";
 async function refreshAccessToken(req, res) {
   const incomingRefreshToken = req.body.refreshToken;
 
@@ -131,4 +134,43 @@ async function getCurrentUser(req, res) {
   }
 }
 
-export { refreshAccessToken, changePassword, updateUserProfile,getCurrentUser };
+async function updateUserAvatar(req, res) {
+  try {
+    const avatarLocalPath = req.file?.path;
+    if (!avatarLocalPath) {
+      return res.status(400).json(new ApiError(400, "Avatar is required"));
+    }
+    const avatarUrl = await uploadOnCloudinary(avatarLocalPath);
+    console.log(avatarUrl, avatarLocalPath);
+
+    if (!avatarUrl) {
+      return res
+        .status(400)
+        .json(new ApiError(400, "Error while uploading avatar"));
+    }
+    const user = await User.findById(req.user?.id);
+    await deleteCloudinaryFile(user.avatar.publicId);
+    user.avatar = {
+      url: avatarUrl.url,
+      publicId: avatarUrl.public_id,
+    };
+    await user.save({ validateBeforeSave: false });
+    user.password = undefined;
+    user.refreshToken = undefined;
+    return res.status(200).json(new ApiResponse(200, "Avatar updated", user));
+  } catch (err) {
+    return res
+      .status(500)
+      .json(
+        new ApiError(500, err?.message || "Error occured while updating avatar")
+      );
+  }
+}
+
+export {
+  refreshAccessToken,
+  changePassword,
+  updateUserProfile,
+  getCurrentUser,
+  updateUserAvatar,
+};

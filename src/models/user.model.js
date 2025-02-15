@@ -18,8 +18,8 @@ const userSchema = new mongoose.Schema({
     trim: true,
   },
   avatar: {
-    type: String,
-    default: "",
+    type: Object,
+    default: {},
   },
   refreshToken: {
     type: String,

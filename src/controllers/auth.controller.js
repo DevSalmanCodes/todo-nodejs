@@ -3,7 +3,10 @@ import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
 import validateUser from "../validations/userValidation.js";
 import sendEmail from "../utils/email.js";
-import uploadOnCloudinary from "../utils/cloudinary.js";
+import {
+  uploadOnCloudinary,
+  deleteCloudinaryFile,
+} from "../utils/cloudinary.js";
 
 async function generateAccessAndRefreshToken(userId) {
   try {
@@ -30,12 +33,23 @@ async function registerUser(req, res) {
       return res.status(400).json(new ApiError(400, "User already exists"));
     }
     const avatarLocalPath = req.file?.path;
+    if (!avatarLocalPath) {
+      return res.status(400).json(new ApiError(400, "Avatar is required"));
+    }
     const avatarUrl = await uploadOnCloudinary(avatarLocalPath);
+    if (!avatarUrl) {
+      return res
+        .status(400)
+        .json(new ApiError(400, "Error while uploading avatar"));
+    }
     const user = await User.create({
       name: name,
       email: email,
       password: password,
-      avatar: avatarUrl,
+      avatar: {
+        url: avatarUrl.url,
+        publicId: avatarUrl.public_id,
+      },
     });
 
     const otp = await sendEmail(email);
@@ -123,6 +137,7 @@ async function verifyOtp(req, res) {
     user.emailOtp = null;
     user.isEmailVerified = true;
     await user.save({ validateBeforeSave: false });
+    return res.status(200).json(new ApiResponse(200, "OTP verified!"));
   } catch (err) {
     return res
       .status(500)
@@ -145,6 +160,7 @@ async function sendOtp(req, res) {
     }
     const otp = await sendEmail(email);
     user.emailOtp = otp;
+    user.otpExpiry = Date.now() + 3 * 60 * 1000;
     user.save({ validateBeforeSave: false });
     return res.status(200).json(new ApiResponse(200, "Otp sent!"));
   } catch (err) {
@@ -175,33 +191,4 @@ async function logoutUser(req, res) {
   }
 }
 
-async function updateUserAvatar(req, res) {
-  try {
-    const avatarLocalPath = req.file?.path;
-    const avatarUrl = await uploadOnCloudinary(avatarLocalPath);
-    if (!avatarUrl) {
-      return res
-        .status(400)
-        .json(new ApiError(400, "Error while uploading avatar"));
-    }
-    const user = await User.findByIdAndUpdate(
-      req.user?.id,
-      { avatar: avatarUrl },
-      { new: true }
-    );
-    return res.status(200).json(new ApiResponse(200, "Avatar updated", user));
-  } catch (err) {
-    return res
-      .status(500)
-      .json(new ApiError(500, "Error occured while updating avatar"));
-  }
-}
-
-export {
-  registerUser,
-  loginUser,
-  verifyOtp,
-  sendOtp,
-  logoutUser,
-  updateUserAvatar,
-};
+export { registerUser, loginUser, verifyOtp, sendOtp, logoutUser };
