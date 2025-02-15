@@ -153,4 +153,55 @@ async function sendOtp(req, res) {
       .json(new ApiError(500, "Error occured while sending otp"));
   }
 }
-export { registerUser, loginUser, verifyOtp, sendOtp };
+
+async function logoutUser(req, res) {
+  try {
+    await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        $unset: {
+          refreshToken: 1,
+        },
+      },
+      { new: true }
+    );
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Logged out successfully"));
+  } catch (err) {
+    return res
+      .status(500)
+      .json(new ApiError(500, "Error occured while logging out"));
+  }
+}
+
+async function updateUserAvatar(req, res) {
+  try {
+    const avatarLocalPath = req.file?.path;
+    const avatarUrl = await uploadOnCloudinary(avatarLocalPath);
+    if (!avatarUrl) {
+      return res
+        .status(400)
+        .json(new ApiError(400, "Error while uploading avatar"));
+    }
+    const user = await User.findByIdAndUpdate(
+      req.user?.id,
+      { avatar: avatarUrl },
+      { new: true }
+    );
+    return res.status(200).json(new ApiResponse(200, "Avatar updated", user));
+  } catch (err) {
+    return res
+      .status(500)
+      .json(new ApiError(500, "Error occured while updating avatar"));
+  }
+}
+
+export {
+  registerUser,
+  loginUser,
+  verifyOtp,
+  sendOtp,
+  logoutUser,
+  updateUserAvatar,
+};
