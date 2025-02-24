@@ -92,8 +92,28 @@ async function deleteTodo(req, res) {
   } catch (err) {
     return res
       .status(500)
-      .json(new ApiError(500), err?.message || "Internal server error");
+      .json(new ApiError(500), err?.message || "Error while deleting the todo");
   }
 }
+async function toggleTodo(req, res) {
+  const todoId = req.params.id;
+  const isCompleted = req.body.isCompleted;
+  if (!todoId) {
+    return res.json(new ApiError(400, "Please provide todo id"));
+  }
+  try {
+    const todo = await Todo.findById(todoId);
+    if (!todo) {
+      return res.json(new ApiError(404, "Todo not found"));
+    }
+    todo.completed = isCompleted;
 
-export { addTodo, getTodos, updateTodo, deleteTodo };
+    await todo.save();
+    return res.json(new ApiResponse(200, "Todo updated successfully", todo));
+  } catch (err) {
+    return res.json(
+      new ApiError(500, err?.message || "Error while updating todo")
+    );
+  }
+}
+export { addTodo, getTodos, updateTodo, deleteTodo, toggleTodo };
