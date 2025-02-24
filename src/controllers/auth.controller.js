@@ -3,6 +3,7 @@ import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
 import validateUser from "../validations/userValidation.js";
 import sendEmail from "../utils/email.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 async function generateAccessAndRefreshToken(userId) {
   try {
@@ -18,6 +19,7 @@ async function generateAccessAndRefreshToken(userId) {
 }
 async function registerUser(req, res) {
   const { name, email, password } = req.body;
+
   const { error } = validateUser(req.body, "register");
   if (error) {
     return res.status(400).json(new ApiError(400, error.details[0].message));
@@ -27,10 +29,24 @@ async function registerUser(req, res) {
     if (existing) {
       return res.status(400).json(new ApiError(400, "User already exists"));
     }
+    const avatarLocalPath = req.file?.path;
+    if (!avatarLocalPath) {
+      return res.status(400).json(new ApiError(400, "Avatar is required"));
+    }
+    const avatarUrl = await uploadOnCloudinary(avatarLocalPath);
+    if (!avatarUrl) {
+      return res
+        .status(400)
+        .json(new ApiError(400, "Error while uploading avatar"));
+    }
     const user = await User.create({
       name: name,
       email: email,
       password: password,
+      avatar: {
+        url: avatarUrl.url,
+        publicId: avatarUrl.public_id,
+      },
     });
 
     const otp = await sendEmail(email);
@@ -55,6 +71,7 @@ async function registerUser(req, res) {
   }
 }
 
+// send
 async function loginUser(req, res) {
   const { email, password } = req.body;
   const { error } = validateUser(req.body, "login");
@@ -107,17 +124,17 @@ async function verifyOtp(req, res) {
     if (!user) {
       return res.status(404).json(new ApiError(404, "User not found"));
     }
-    if (user.emailOtp !== otp ) {
+    if (user.emailOtp !== otp) {
       return res.status(400).json(new ApiError(400, "Invalid otp"));
     }
-    
-    if(Date.now() > user.otpExpiry){
+
+    if (Date.now() > user.otpExpiry) {
       return res.status(400).json(new ApiError(400, "Otp expired"));
     }
     user.emailOtp = null;
     user.isEmailVerified = true;
     await user.save({ validateBeforeSave: false });
-    return res.status(200).json(new ApiResponse(200, "Email verified!"));
+    return res.status(200).json(new ApiResponse(200, "OTP verified!"));
   } catch (err) {
     return res
       .status(500)
@@ -140,12 +157,39 @@ async function sendOtp(req, res) {
     }
     const otp = await sendEmail(email);
     user.emailOtp = otp;
+    user.otpExpiry = Date.now() + 3 * 60 * 1000;
     user.save({ validateBeforeSave: false });
     return res.status(200).json(new ApiResponse(200, "Otp sent!"));
   } catch (err) {
     return res
       .status(500)
-      .json(new ApiError(500, "Error occured while sending otp"));
+      .json(
+        new ApiError(500, err?.message || "Error occured while sending otp")
+      );
   }
 }
-export { registerUser, loginUser, verifyOtp, sendOtp };
+
+async function logoutUser(req, res) {
+  try {
+    await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        $unset: {
+          refreshToken: 1,
+        },
+      },
+      { new: true }
+    );
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Logged out successfully"));
+  } catch (err) {
+    return res
+      .status(500)
+      .json(
+        new ApiError(500, err?.message || "Error occured while logging out")
+      );
+  }
+}
+
+export { registerUser, loginUser, verifyOtp, sendOtp, logoutUser };

@@ -17,6 +17,10 @@ const userSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
+  avatar: {
+    type: Object,
+    default: {},
+  },
   refreshToken: {
     type: String,
     default: null,
@@ -27,12 +31,12 @@ const userSchema = new mongoose.Schema({
   },
   otpExpiry: {
     type: Date,
-    default: () => Date.now() + 3 * 60 * 1000, 
+    default: () => Date.now() + 3 * 60 * 1000,
   },
-  isEmailVerified:{
+  isEmailVerified: {
     type: Boolean,
     default: false,
-  }
+  },
 });
 
 userSchema.pre("save", async function (next) {

@@ -2,7 +2,10 @@ import jwt from "jsonwebtoken";
 import ApiResponse from "../utils/ApiResponse.js";
 import User from "../models/user.model.js";
 import ApiError from "../utils/ApiError.js";
-
+import {
+  uploadOnCloudinary,
+  deleteCloudinaryFile,
+} from "../utils/cloudinary.js";
 async function refreshAccessToken(req, res) {
   const incomingRefreshToken = req.body.refreshToken;
 
@@ -44,7 +47,12 @@ async function refreshAccessToken(req, res) {
     } else {
       return res
         .status(500)
-        .json(new ApiError(500, err?.message || "Error while refreshing access token"));
+        .json(
+          new ApiError(
+            500,
+            err?.message || "Error while refreshing access token"
+          )
+        );
     }
   }
 }
@@ -78,28 +86,91 @@ async function changePassword(req, res) {
   } catch (err) {
     return res
       .status(500)
-      .json(new ApiError(500, err?.message || "Error occurred while changing password"));
+      .json(
+        new ApiError(
+          500,
+          err?.message || "Error occurred while changing password"
+        )
+      );
   }
 }
 
-async function updateUserProfile(req, res) {
+async function updateUserProfileDetails(req, res) {
   const { name, email } = req.body;
   if (!name && !email) {
     return res.status(400).json(new ApiError(400, "Name or email is required"));
   }
   try {
-    const user = await User.findByIdAndUpdate(req.user._id,{
-      name:name,
-      email:email,
-    },{
-      new:true,
-      
-    }).select("-password -refreshToken");
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        name: name,
+        email: email,
+      },
+      {
+        new: true,
+      }
+    ).select("-password -refreshToken");
 
-    return res.status(200).json(new ApiResponse(200, "Profile updated successfully", user));
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Profile updated successfully", user));
   } catch (err) {
-    return res.status(500).json(new ApiError(500, err?.message || "Error while updating profile"));
+    return res
+      .status(500)
+      .json(new ApiError(500, err?.message || "Error while updating profile"));
   }
 }
 
-export { refreshAccessToken, changePassword,updateUserProfile };
+async function getCurrentUser(req, res) {
+  try {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "User found successfully", req.user));
+  } catch (err) {
+    return res
+      .status(500)
+      .json(new ApiError(500, err?.message || "Error while getting user"));
+  }
+}
+
+async function updateUserAvatar(req, res) {
+  try {
+    const avatarLocalPath = req.file?.path;
+    if (!avatarLocalPath) {
+      return res.status(400).json(new ApiError(400, "Avatar is required"));
+    }
+    const avatarUrl = await uploadOnCloudinary(avatarLocalPath);
+    console.log(avatarUrl, avatarLocalPath);
+
+    if (!avatarUrl) {
+      return res
+        .status(400)
+        .json(new ApiError(400, "Error while uploading avatar"));
+    }
+    const user = await User.findById(req.user?.id);
+    await deleteCloudinaryFile(user.avatar.publicId);
+    user.avatar = {
+      url: avatarUrl.url,
+      publicId: avatarUrl.public_id,
+    };
+    await user.save({ validateBeforeSave: false });
+    user.password = undefined;
+    user.refreshToken = undefined;
+    return res.status(200).json(new ApiResponse(200, "Avatar updated", user));
+  } catch (err) {
+    return res
+      .status(500)
+      .json(
+        new ApiError(500, err?.message || "Error occured while updating avatar")
+      );
+  }
+}
+
+export {
+  refreshAccessToken,
+  changePassword,
+  updateUserProfileDetails,
+  getCurrentUser,
+  updateUserAvatar,
+};

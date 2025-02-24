@@ -11,10 +11,10 @@ import isAuthorizedUser from "./middlewares/auth.middleware.js";
 const PORT = process.env.PORT || 3000;
 app.use(express.json());
 connectDb(process.env.MONGO_DB_URI).then((_) => {
-app.listen(PORT, () => {
+  app.listen(PORT, () => {
     console.log(`✅ Server listening on port: ${PORT}`);
   });
   app.use("/api/v1/auth", authRouter);
-  app.use("/api/v1/user",isAuthorizedUser, userRouter);
-  app.use("/api/v1/todo",isAuthorizedUser, todoRouter);
+  app.use("/api/v1/user", userRouter);
+  app.use("/api/v1/todo", isAuthorizedUser, todoRouter);
 });
